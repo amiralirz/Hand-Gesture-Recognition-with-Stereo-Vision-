@@ -1,43 +1,23 @@
-import time
 import cv2
-import numpy as np
-import mediapipe as mp
+import glob
 
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles 
-mp_hands = mp.solutions.hands
-cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-with mp_hands.Hands(
-    model_complexity=0,
-    min_detection_confidence=0.5,
-    min_tracking_confidence=0.5) as hands:
-  while cap.isOpened():
-    success, image = cap.read()
-    if not success:
-      print("Ignoring empty camera frame.")
-      # If loading a video, use 'break' instead of 'continue'.
-      continue
+def select_corners(event, x, y, flags, param):
+    global previous_point
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print(f"X = {x}, Y = {y}")
+        cv2.circle(img, (x, y), 5, (0, 0, 255), 1)
+        cv2.imshow('Image', img)
 
-    # To improve performance, optionally mark the image as not writeable to
-    # pass by reference.
-    image.flags.writeable = False
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    results = hands.process(image)
+pattern_size = (4,4)
 
-    # Draw the hand annotations on the image.
-    image.flags.writeable = True
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    image_height, image_width, _ = image.shape
-    if results.multi_hand_landmarks:
-      for hand_landmarks in results.multi_hand_landmarks:
-        print(f"{image_width} - {hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x*image_width}")
-        mp_drawing.draw_landmarks(
-            image,
-            hand_landmarks,
-            mp_hands.HAND_CONNECTIONS,
-            mp_drawing_styles.get_default_hand_landmarks_style(),
-            mp_drawing_styles.get_default_hand_connections_style())
-    # Flip the image horizontally for a selfie-view display.
-    cv2.imshow('MediaPipe Hands', cv2.flip(image, 1))
-    if cv2.waitKey(5) & 0xFF == 27:
-      break
+criteria = (cv2.TERM_CRITERIA_EPS, 30, 0.001)
+
+images = glob.glob('./images/*.jpg')
+
+for i, image_path in enumerate(images):
+    img = cv2.imread(image_path)
+    cv2.imshow('Image', img)
+    cv2.setMouseCallback('Image', select_corners, (i))
+    cv2.waitKey(0)
+
+cv2.destroyAllWindows()

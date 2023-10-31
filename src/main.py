@@ -2,6 +2,7 @@ import threading
 import time
 import cv2
 import mediapipe as mp
+import Sterep_vision
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles 
@@ -12,6 +13,7 @@ hands = [mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tr
 caps = [cv2.VideoCapture(0, cv2.CAP_DSHOW), cv2.VideoCapture(1, cv2.CAP_DSHOW)]
 successes = [0,0]
 images = [0,0]
+results = [0, 0]
 
 while True:
     successes[0], images[0] = caps[0].read()
@@ -19,17 +21,17 @@ while True:
 
     if not successes[0] or not successes[1]:
         print("One of the cameras failed")
-        continue
+        continue    
     
     for index, image in enumerate(images):
         image.flags.writeable = False
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = hands[index].process(image)
+        results[index] = hands[index].process(image)
         # Draw the hand annotations on the image.
         image.flags.writeable = True
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
+        if results[index].multi_hand_landmarks:
+            for hand_landmarks in results[index].multi_hand_landmarks:
                 mp_drawing.draw_landmarks(
                     image,
                     hand_landmarks,
