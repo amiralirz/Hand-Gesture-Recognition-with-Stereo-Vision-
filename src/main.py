@@ -1,44 +1,39 @@
-import threading
-import time
-import cv2
-import mediapipe as mp
-import Sterep_vision
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles 
-mp_hands = mp.solutions.hands
+from stereohand import StereoHand
 
-hands = [mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracking_confidence= 0.5), mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracking_confidence= 0.5)]
+stereo_hand_instance = StereoHand()
 
-caps = [cv2.VideoCapture(0, cv2.CAP_DSHOW), cv2.VideoCapture(1, cv2.CAP_DSHOW)]
-successes = [0,0]
-images = [0,0]
-results = [0, 0]
+fig, ax = plt.subplots(1, 2)
+point1, = ax[0].plot([0], [0], color="red")
+point2, = ax[1].plot([0], [0], color="green")
 
-while True:
-    successes[0], images[0] = caps[0].read()
-    successes[1], images[1] = caps[1].read()
+ax[0].set_xlim(0, 40)
+ax[0].set_ylim(-10, 20)
+ax[1].set_xlim(-40, 100)
+ax[1].set_ylim(-100, 100)
 
-    if not successes[0] or not successes[1]:
-        print("One of the cameras failed")
-        continue    
-    
-    for index, image in enumerate(images):
-        image.flags.writeable = False
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results[index] = hands[index].process(image)
-        # Draw the hand annotations on the image.
-        image.flags.writeable = True
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        if results[index].multi_hand_landmarks:
-            for hand_landmarks in results[index].multi_hand_landmarks:
-                mp_drawing.draw_landmarks(
-                    image,
-                    hand_landmarks,
-                    mp_hands.HAND_CONNECTIONS,
-                    mp_drawing_styles.get_default_hand_landmarks_style(),
-                    mp_drawing_styles.get_default_hand_connections_style())
-            # Flip the image horizontally for a selfie-view display.
-        cv2.imshow(f'MediaPipe Hands - {index}', cv2.flip(image, 1))
-        if cv2.waitKey(5) & 0xFF == 27:
-            break
+def update(frame):
+    found, pos3d = stereo_hand_instance.get_hand()
+    if not found:
+        return (0, 0)
+    # point.set_data([x], [y])
+    x = [e[0] for e in pos3d]
+    y = [e[1] for e in pos3d]
+    z = [e[2]*10 for e in pos3d]
+    point1.set_data(x, y)
+    point2.set_data(x, [z[0]]*21)
+    return point1, point2
+
+# Create the animation
+ani = FuncAnimation(
+    fig,
+    update,
+    interval=100,  # Update every 100 milliseconds
+)
+
+plt.show()
+
+
