@@ -21,7 +21,7 @@ class StereoHand:
         self.successes = [0,0]
         self.images = [0,0]
         self.results = [0, 0]
-        self.stereo_object = Stereo(9, 1.0157791196778294, 60)
+        self.stereo_object = Stereo(9, 1.0157791196778294, 60) # The baseline and focal length valuse should be updated for each setup!!!!
         # self.stereo_object = Stereo(9, 1.0157791196778294, 0)
     
     def get_hand(self):
