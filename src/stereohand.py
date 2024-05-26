@@ -6,7 +6,7 @@ from stereovision import Stereo
 
 
 class StereoHand:
-    def __init__(self):
+    def __init__(self, Stereo_Object:Stereo):
         self.calib = [calibrator("./calibration objects\cam1_calib.pkl"), calibrator("./calibration objects\cam2_calib.pkl")]
         print("calibration objects loaded successfully")
 
@@ -14,14 +14,14 @@ class StereoHand:
         self.mp_drawing_styles = mp.solutions.drawing_styles 
         self.mp_hands = mp.solutions.hands
 
-        self.hands = [self.mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracking_confidence= 0.5), self.mp_hands.Hands(model_complexity=0, min_detection_confidence=0.5, min_tracking_confidence= 0.5)]
+        self.hands = [self.mp_hands.Hands(model_complexity=1, min_detection_confidence=0.5, min_tracking_confidence= 0.5), self.mp_hands.Hands(model_complexity=1, min_detection_confidence=0.5, min_tracking_confidence= 0.5)]
         print("mediapipe models created successfully")
 
         self.caps = [cv2.VideoCapture(0, cv2.CAP_DSHOW), cv2.VideoCapture(1, cv2.CAP_DSHOW)]
         self.successes = [0,0]
         self.images = [0,0]
         self.results = [0, 0]
-        self.stereo_object = Stereo(9, 1.0157791196778294, 60) # The baseline and focal length valuse should be updated for each setup!!!!
+        self.stereo_object = Stereo_Object # The baseline and focal length valuse should be updated for each setup!!!!
         # self.stereo_object = Stereo(9, 1.0157791196778294, 0)
     
     def get_hand(self):
@@ -37,7 +37,8 @@ class StereoHand:
         
         for index, image in enumerate(self.images):
             image.flags.writeable = False
-            image = self.calib[index].undistort(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            #image = self.calib[index].undistort(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             self.results[index] = self.hands[index].process(image)
             # Draw hand annotations on the image.
             image.flags.writeable = True
@@ -58,7 +59,7 @@ class StereoHand:
         
         self.hands_found = True
         for i in range(2):
-            if not self.results[i].multi_hand_landmarks:
+            if not self.results[i].multi_hand_landmarks: # checks if both cameras have found a hand
                 self.hands_found = False
 
         if not self.hands_found:
@@ -78,7 +79,7 @@ class StereoHand:
         self.points3d = []
 
         for i in range(21):
-            self.pos3d = self.stereo_object.locate(self.cam_points[0][i], self.cam_points[1][i])
+            self.pos3d = self.stereo_object.locate(self.cam_points[0][i], self.cam_points[1][i]) # calculates the estimated 3d postion of hand landmark
             self.points3d.append(self.pos3d) 
         
         return True, self.points3d

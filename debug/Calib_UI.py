@@ -1,6 +1,9 @@
 import cv2
 import glob
 import numpy as np
+import pickle as pkl
+
+# This program gets the location of checkerborad corners from the user and the stores them in a pkl file
 
 def select_corners(event, x, y, flags, param):
     global click_counter
@@ -25,9 +28,8 @@ objpoints = []
 imgpoints = [] 
 
 # Defining the world coordinates for 3D points
-objp = np.zeros((1, pattern_size[0]*pattern_size[1], 3), np.float32)
-objp[0,:,:2] = np.mgrid[0:pattern_size[0], 0:pattern_size[1]].T.reshape(-1, 2)
-
+objp = np.zeros((pattern_size[0]*pattern_size[1], 3), np.float32)
+objp[:,:2] = np.mgrid[0:pattern_size[1],0:pattern_size[0]].T.reshape(-1,2)
 
 for i, image_path in enumerate(images):
     img_original = cv2.imread(image_path)
@@ -38,6 +40,7 @@ for i, image_path in enumerate(images):
     cv2.setMouseCallback('Image', select_corners)
     x_offset = 0
     y_offset = 0
+    points = []
     while True:
         if len(points) == pattern_area:
             break
@@ -58,6 +61,19 @@ for i, image_path in enumerate(images):
     imgpoints.append(imgpt)
     objpoints.append(objp)
 
+
 cv2.destroyAllWindows()
 
-ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, img_original.shape[0:2],None,None)
+# objpoints = [x.reshape(1, pattern_area, pattern_size[1]) for x in objpoints]
+# imgpoints = [np.float32(x) for x in imgpoints]
+
+# storing the objects in pickle filses
+
+objpoints = [x.reshape(1, pattern_area, 3) for x in objpoints]
+imgpoints = [np.float32(x) for x in imgpoints]
+
+with open('objpoint.pkl','wb') as f:
+    pkl.dump(objpoints, f)
+
+with open('imgpoints.pkl','wb') as f:
+    pkl.dump(imgpoints, f)

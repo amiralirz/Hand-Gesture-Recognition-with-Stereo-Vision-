@@ -14,11 +14,8 @@ class Stereo:
         self.disparity_shift = disparity_shift
     
     def locate(self, p1:tuple, p2:tuple)->tuple:
-        self.disparity = abs(p1[0] - p2[0] + self.disparity_shift)
-        self.z = (self.b * self.f) / self.disparity
-        self.x = p1[0] * self.b / self.disparity
-        self.y = self.x / p1[0] * (p1[1] + p2[1]) / 2
+        self.disparity = abs(p1[0] - p2[0] + self.disparity_shift) # d = X1 - X2 + Ds
+        self.z = (self.b * self.f) / self.disparity # Z = f * B / d
+        self.x = p1[0] * self.z / self.f # X = X1 * Z / f
+        self.y = (p1[1] + p2[1]) * self.z / self.f
         return (self.x, self.y, self.z)
-        
-
-    
